@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>极简记账 Pro</title>
+    <style>
+        :root {
+            --ios-blue: #007AFF;
+            --ios-bg: #F2F2F7;
+            --ios-card: #FFFFFF;
+            --text-main: #000000;
+            --text-sec: #8E8E93;
+            --ios-red: #FF3B30;
+            --ios-green: #34C759;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--ios-bg); 
+            margin: 0; 
+            padding-bottom: 50px;
+        }
+
+        .app-container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        header { margin: 40px 0 20px 10px; display: flex; justify-content: space-between; align-items: flex-end; }
+        h1 { font-size: 34px; font-weight: 800; margin: 0; }
+
+        .summary-card {
+            background: var(--ios-card);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .balance-label { font-size: 13px; color: var(--text-sec); margin-bottom: 5px; }
+        .balance-amount { font-size: 32px; font-weight: 700; color: var(--ios-blue); margin-bottom: 15px; }
+        .stats-row { display: flex; border-top: 0.5px solid #eee; padding-top: 15px; }
+        .stat-item { flex: 1; }
+        .stat-label { font-size: 11px; color: var(--text-sec); }
+        .stat-value { font-size: 16px; font-weight: 600; }
+
+        .type-selector {
+            display: flex;
+            background: #E3E3E8;
+            padding: 2px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .type-btn {
+            flex: 1; border: none; background: none; padding: 10px;
+            font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .type-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .input-group { background: var(--ios-card); border-radius: 12px; overflow: hidden; margin-bottom: 15px; }
+        input {
+            width: 100%; border: none; padding: 16px 20px; font-size: 17px;
+            box-sizing: border-box; outline: none; border-bottom: 0.5px solid #E5E5EA;
+        }
+        input:last-child { border-bottom: none; }
+
+        .add-btn {
+            width: 100%; background: var(--ios-blue); color: white; border: none;
+            padding: 16px; border-radius: 12px; font-size: 17px; font-weight: 600;
+            cursor: pointer; active { opacity: 0.7; }
+        }
+
+        .list-header { margin: 30px 10px 10px; font-weight: 600; font-size: 20px; }
+        ul { list-style: none; padding: 0; background: var(--ios-card); border-radius: 12px; margin: 0; }
+        li {
+            padding: 14px 20px; display: flex; justify-content: space-between;
+            align-items: center; border-bottom: 0.5px solid #E5E5EA;
+        }
+        li:last-child { border-bottom: none; }
+        .item-info { display: flex; flex-direction: column; }
+        .item-name { font-size: 17px; margin-bottom: 2px; }
+        .item-date { font-size: 12px; color: var(--text-sec); }
+        .item-right { display: flex; align-items: center; }
+        .item-price { font-size: 17px; font-weight: 600; margin-right: 12px; }
+        .del-icon { color: #FF3B30; font-size: 12px; background: #FFF5F5; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+
+        .income-text { color: var(--ios-green); }
+        .expense-text { color: var(--ios-red); }
+        .empty { text-align: center; color: var(--text-sec); padding: 40px; }
+        .reset-link { font-size: 12px; color: var(--text-sec); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>记账</h1>
+        <span class="reset-link" onclick="clearAll()">清空</span>
+    </header>
+
+    <div class="summary-card">
+        <div class="balance-label">账户余额</div>
+        <div class="balance-amount" id="balanceDisplay">￥0.00</div>
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-label">总收入</div>
+                <div class="stat-value income-text" id="incDisplay">￥0.00</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">总支出</div>
+                <div class="stat-value expense-text" id="expDisplay">￥0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="type-selector">
+        <button class="type-btn active" id="btnExp" onclick="changeType('expense')">支出</button>
+        <button class="type-btn" id="btnInc" onclick="changeType('income')">收入</button>
+    </div>
+
+    <div class="input-group">
+        <input type="number" id="amtInput" placeholder="金额" inputmode="decimal">
+        <input type="text" id="descInput" placeholder="备注">
+    </div>
+    <button class="add-btn" id="mainBtn" onclick="handleSave()">记录这笔账</button>
+
+    <div class="list-header">历史明细</div>
+    <div id="listWrapper"></div>
+</div>
+
+<script>
+    // 使用新的 key 避免旧数据干扰
+    const STORAGE_KEY = 'money_app_v4';
+    let currentMode = 'expense';
+
+    // 页面加载完成后立即渲染一次
+    window.onload = function() {
+        refreshUI();
+    };
+
+    function changeType(type) {
+        currentMode = type;
+        document.getElementById('btnExp').classList.toggle('active', type === 'expense');
+        document.getElementById('btnInc').classList.toggle('active', type === 'income');
+        document.getElementById('mainBtn').style.background = (type === 'income') ? 'var(--ios-green)' : 'var(--ios-blue)';
+    }
+
+    function handleSave() {
+        try {
+            const amtEl = document.getElementById('amtInput');
+            const descEl = document.getElementById('descInput');
+            
+            const amount = parseFloat(amtEl.value);
+            const desc = descEl.value.trim() || (currentMode === 'income' ? '收入' : '支出');
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('请输入有效的金额！');
+                return;
+            }
+
+            const newRecord = {
+                id: Date.now(),
+                amount: amount,
+                desc: desc,
+                type: currentMode,
+                date: new Date().toLocaleDateString()
+            };
+
+            // 读取
+            const rawData = localStorage.getItem(STORAGE_KEY);
+            const data = rawData ? JSON.parse(rawData) : [];
+            
+            // 写入
+            data.push(newRecord);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+            // 清空输入
+            amtEl.value = '';
+            descEl.value = '';
+            
+            // 刷新
+            refreshUI();
+            
+        } catch (e) {
+            alert('保存失败，错误原因：' + e.message);
+        }
+    }
+
+    function removeRecord(id) {
+        if (!confirm('确定删除吗？')) return;
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        const filtered = data.filter(item => item.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+        refreshUI();
+    }
+
+    function clearAll() {
+        if (!confirm('确定要清空所有数据吗？')) return;
+        localStorage.removeItem(STORAGE_KEY);
+        refreshUI();
+    }
+
+    function refreshUI() {
+        const wrapper = document.getElementById('listWrapper');
+        const rawData = localStorage.getItem(STORAGE_KEY);
+        const data = rawData ? JSON.parse(rawData) : [];
+        
+        let incTotal = 0;
+        let expTotal = 0;
+        let html = '<ul>';
+
+        if (data.length === 0) {
+            wrapper.innerHTML = '<div class="empty">暂无记录</div>';
+        } else {
+            // 倒序显示，最新的在最上面
+            [...data].reverse().forEach(item => {
+                if (item.type === 'income') incTotal += item.amount;
+                else expTotal += item.amount;
+
+                const colorClass = item.type === 'income' ? 'income-text' : 'expense-text';
+                const prefix = item.type === 'income' ? '+' : '-';
+
+                html += `
+                    <li>
+                        <div class="item-info">
+                            <span class="item-name">${item.desc}</span>
+                            <span class="item-date">${item.date}</span>
+                        </div>
+                        <div class="item-right">
+                            <span class="item-price ${colorClass}">${prefix}￥${item.amount.toFixed(2)}</span>
+                            <span class="del-icon" onclick="removeRecord(${item.id})">删除</span>
+                        </div>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            wrapper.innerHTML = html;
+        }
+
+        document.getElementById('incDisplay').innerText = '￥' + incTotal.toFixed(2);
+        document.getElementById('expDisplay').innerText = '￥' + expTotal.toFixed(2);
+        document.getElementById('balanceDisplay').innerText = '￥' + (incTotal - expTotal).toFixed(2);
+    }
+</script>
+</body>
+</html>
