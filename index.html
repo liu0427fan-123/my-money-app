@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>极简记账 Pro</title>
-<link rel="apple-touch-icon" href="icon.png">
 
-<link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png?v=1">
+    <link rel="icon" type="image/png" href="icon.png?v=1">
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="极简记账">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="极简记账">
+
     <style>
         :root {
             --ios-blue: #007AFF;
@@ -57,7 +58,6 @@
         .type-btn {
             flex: 1; border: none; background: none; padding: 10px;
             font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px;
-            transition: all 0.2s;
         }
         .type-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
@@ -71,8 +71,9 @@
         .add-btn {
             width: 100%; background: var(--ios-blue); color: white; border: none;
             padding: 16px; border-radius: 12px; font-size: 17px; font-weight: 600;
-            cursor: pointer; active { opacity: 0.7; }
+            cursor: pointer;
         }
+        .add-btn:active { opacity: 0.7; }
 
         .list-header { margin: 30px 10px 10px; font-weight: 600; font-size: 20px; }
         ul { list-style: none; padding: 0; background: var(--ios-card); border-radius: 12px; margin: 0; }
@@ -99,7 +100,7 @@
 <div class="app-container">
     <header>
         <h1>记账</h1>
-        <span class="reset-link" onclick="clearAll()">清空</span>
+        <span class="reset-link" onclick="clearAll()">清空数据</span>
     </header>
 
     <div class="summary-card">
@@ -123,7 +124,7 @@
     </div>
 
     <div class="input-group">
-        <input type="number" id="amtInput" placeholder="金额" inputmode="decimal">
+        <input type="number" id="amtInput" placeholder="0.00" inputmode="decimal">
         <input type="text" id="descInput" placeholder="备注">
     </div>
     <button class="add-btn" id="mainBtn" onclick="handleSave()">记录这笔账</button>
@@ -133,14 +134,10 @@
 </div>
 
 <script>
-    // 使用新的 key 避免旧数据干扰
     const STORAGE_KEY = 'money_app_v4';
     let currentMode = 'expense';
 
-    // 页面加载完成后立即渲染一次
-    window.onload = function() {
-        refreshUI();
-    };
+    window.onload = function() { refreshUI(); };
 
     function changeType(type) {
         currentMode = type;
@@ -150,44 +147,30 @@
     }
 
     function handleSave() {
-        try {
-            const amtEl = document.getElementById('amtInput');
-            const descEl = document.getElementById('descInput');
-            
-            const amount = parseFloat(amtEl.value);
-            const desc = descEl.value.trim() || (currentMode === 'income' ? '收入' : '支出');
+        const amtEl = document.getElementById('amtInput');
+        const descEl = document.getElementById('descInput');
+        const amount = parseFloat(amtEl.value);
+        const desc = descEl.value.trim() || (currentMode === 'income' ? '收入' : '支出');
 
-            if (isNaN(amount) || amount <= 0) {
-                alert('请输入有效的金额！');
-                return;
-            }
-
-            const newRecord = {
-                id: Date.now(),
-                amount: amount,
-                desc: desc,
-                type: currentMode,
-                date: new Date().toLocaleDateString()
-            };
-
-            // 读取
-            const rawData = localStorage.getItem(STORAGE_KEY);
-            const data = rawData ? JSON.parse(rawData) : [];
-            
-            // 写入
-            data.push(newRecord);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-
-            // 清空输入
-            amtEl.value = '';
-            descEl.value = '';
-            
-            // 刷新
-            refreshUI();
-            
-        } catch (e) {
-            alert('保存失败，错误原因：' + e.message);
+        if (isNaN(amount) || amount <= 0) {
+            alert('请输入有效金额');
+            return;
         }
+
+        const newRecord = {
+            id: Date.now(),
+            amount: amount,
+            desc: desc,
+            type: currentMode,
+            date: new Date().toLocaleDateString()
+        };
+
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        data.push(newRecord);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        amtEl.value = '';
+        descEl.value = '';
+        refreshUI();
     }
 
     function removeRecord(id) {
@@ -199,48 +182,33 @@
     }
 
     function clearAll() {
-        if (!confirm('确定要清空所有数据吗？')) return;
+        if (!confirm('确定清空？')) return;
         localStorage.removeItem(STORAGE_KEY);
         refreshUI();
     }
 
     function refreshUI() {
         const wrapper = document.getElementById('listWrapper');
-        const rawData = localStorage.getItem(STORAGE_KEY);
-        const data = rawData ? JSON.parse(rawData) : [];
-        
-        let incTotal = 0;
-        let expTotal = 0;
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        let incTotal = 0, expTotal = 0;
         let html = '<ul>';
 
         if (data.length === 0) {
             wrapper.innerHTML = '<div class="empty">暂无记录</div>';
         } else {
-            // 倒序显示，最新的在最上面
             [...data].reverse().forEach(item => {
                 if (item.type === 'income') incTotal += item.amount;
                 else expTotal += item.amount;
-
-                const colorClass = item.type === 'income' ? 'income-text' : 'expense-text';
-                const prefix = item.type === 'income' ? '+' : '-';
-
-                html += `
-                    <li>
-                        <div class="item-info">
-                            <span class="item-name">${item.desc}</span>
-                            <span class="item-date">${item.date}</span>
-                        </div>
-                        <div class="item-right">
-                            <span class="item-price ${colorClass}">${prefix}￥${item.amount.toFixed(2)}</span>
-                            <span class="del-icon" onclick="removeRecord(${item.id})">删除</span>
-                        </div>
-                    </li>
-                `;
+                html += `<li>
+                    <div class="item-info"><span class="item-name">${item.desc}</span><span class="item-date">${item.date}</span></div>
+                    <div class="item-right">
+                        <span class="item-price ${item.type === 'income' ? 'income-text' : 'expense-text'}">${item.type === 'income' ? '+' : '-'}￥${item.amount.toFixed(2)}</span>
+                        <span class="del-icon" onclick="removeRecord(${item.id})">删除</span>
+                    </div>
+                </li>`;
             });
-            html += '</ul>';
-            wrapper.innerHTML = html;
+            wrapper.innerHTML = html + '</ul>';
         }
-
         document.getElementById('incDisplay').innerText = '￥' + incTotal.toFixed(2);
         document.getElementById('expDisplay').innerText = '￥' + expTotal.toFixed(2);
         document.getElementById('balanceDisplay').innerText = '￥' + (incTotal - expTotal).toFixed(2);
