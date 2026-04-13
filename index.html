@@ -3,215 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>极简记账 Pro</title>
-
-    <link rel="apple-touch-icon" href="icon.png?v=1">
-    <link rel="icon" type="image/png" href="icon.png?v=1">
-
+    <title>极简记账 Pro V2.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="极简记账">
-
     <style>
         :root {
-            --ios-blue: #007AFF;
-            --ios-bg: #F2F2F7;
-            --ios-card: #FFFFFF;
-            --text-main: #000000;
-            --text-sec: #8E8E93;
-            --ios-red: #FF3B30;
-            --ios-green: #34C759;
+            --ios-blue: #007AFF; --ios-bg: #F2F2F7; --ios-card: #FFFFFF;
+            --text-main: #000000; --text-sec: #8E8E93;
+            --ios-red: #FF3B30; --ios-green: #34C759;
         }
-
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--ios-bg); 
-            margin: 0; 
-            padding-bottom: 50px;
-        }
-
+        body { font-family: -apple-system, sans-serif; background: var(--ios-bg); margin: 0; padding-bottom: 30px; }
         .app-container { max-width: 500px; margin: 0 auto; padding: 20px; }
-        header { margin: 40px 0 20px 10px; display: flex; justify-content: space-between; align-items: flex-end; }
-        h1 { font-size: 34px; font-weight: 800; margin: 0; }
+        
+        /* 登录页面 */
+        #loginPage { 
+            display: flex; flex-direction: column; justify-content: center; height: 100vh; text-align: center;
+            background: white; position: fixed; width: 100%; top: 0; z-index: 1000;
+        }
+        .login-box { padding: 40px; }
+        .login-box input { 
+            width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 10px; 
+            border: 1px solid #ddd; font-size: 16px; box-sizing: border-box;
+        }
 
-        .summary-card {
-            background: var(--ios-card);
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .balance-label { font-size: 13px; color: var(--text-sec); margin-bottom: 5px; }
-        .balance-amount { font-size: 32px; font-weight: 700; color: var(--ios-blue); margin-bottom: 15px; }
-        .stats-row { display: flex; border-top: 0.5px solid #eee; padding-top: 15px; }
-        .stat-item { flex: 1; }
-        .stat-label { font-size: 11px; color: var(--text-sec); }
-        .stat-value { font-size: 16px; font-weight: 600; }
+        /* 顶部导航 */
+        header { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
+        h1 { font-size: 28px; font-weight: 800; margin: 0; }
+        .logout-btn { color: var(--ios-red); font-size: 14px; cursor: pointer; }
 
-        .type-selector {
-            display: flex;
-            background: #E3E3E8;
-            padding: 2px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-        .type-btn {
-            flex: 1; border: none; background: none; padding: 10px;
-            font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px;
-        }
-        .type-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* 卡片样式 */
+        .card { background: var(--ios-card); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .stat-row { display: flex; justify-content: space-between; margin-top: 15px; border-top: 0.5px solid #f0f0f0; padding-top: 15px; }
+        
+        /* 输入框组合 */
+        .input-group { display: flex; flex-direction: column; gap: 1px; background: #E5E5EA; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 0.5px solid #E5E5EA; }
+        .input-group input, .input-group select { border: none; padding: 14px 15px; font-size: 16px; outline: none; }
+        
+        /* 分类统计条 */
+        .category-stat { margin-bottom: 12px; }
+        .cat-info { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+        .progress-bg { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--ios-blue); border-radius: 4px; }
 
-        .input-group { background: var(--ios-card); border-radius: 12px; overflow: hidden; margin-bottom: 15px; }
-        input {
-            width: 100%; border: none; padding: 16px 20px; font-size: 17px;
-            box-sizing: border-box; outline: none; border-bottom: 0.5px solid #E5E5EA;
-        }
-        input:last-child { border-bottom: none; }
+        /* 按钮 */
+        .primary-btn { width: 100%; background: var(--ios-blue); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; }
+        .type-tabs { display: flex; background: #E3E3E8; padding: 2px; border-radius: 10px; margin-bottom: 15px; }
+        .tab { flex: 1; border: none; background: none; padding: 8px; font-size: 14px; border-radius: 8px; cursor: pointer; }
+        .tab.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 600; }
 
-        .add-btn {
-            width: 100%; background: var(--ios-blue); color: white; border: none;
-            padding: 16px; border-radius: 12px; font-size: 17px; font-weight: 600;
-            cursor: pointer;
-        }
-        .add-btn:active { opacity: 0.7; }
-
-        .list-header { margin: 30px 10px 10px; font-weight: 600; font-size: 20px; }
-        ul { list-style: none; padding: 0; background: var(--ios-card); border-radius: 12px; margin: 0; }
-        li {
-            padding: 14px 20px; display: flex; justify-content: space-between;
-            align-items: center; border-bottom: 0.5px solid #E5E5EA;
-        }
-        li:last-child { border-bottom: none; }
-        .item-info { display: flex; flex-direction: column; }
-        .item-name { font-size: 17px; margin-bottom: 2px; }
+        /* 明细列表 */
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { padding: 12px 0; border-bottom: 0.5px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .item-left { display: flex; flex-direction: column; }
+        .item-cat { font-size: 12px; color: var(--ios-blue); background: #EBF5FF; padding: 2px 6px; border-radius: 4px; align-self: flex-start; margin-bottom: 4px; }
+        .item-name { font-weight: 500; }
         .item-date { font-size: 12px; color: var(--text-sec); }
-        .item-right { display: flex; align-items: center; }
-        .item-price { font-size: 17px; font-weight: 600; margin-right: 12px; }
-        .del-icon { color: #FF3B30; font-size: 12px; background: #FFF5F5; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
-
-        .income-text { color: var(--ios-green); }
-        .expense-text { color: var(--ios-red); }
-        .empty { text-align: center; color: var(--text-sec); padding: 40px; }
-        .reset-link { font-size: 12px; color: var(--text-sec); cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
+<div id="loginPage">
+    <div class="login-box">
+        <h2 style="font-size: 32px; margin-bottom: 30px;">🔐 记账账本</h2>
+        <input type="text" id="username" placeholder="用户名 (123)">
+        <input type="password" id="password" placeholder="密码 (123)">
+        <button class="primary-btn" onclick="checkLogin()">进入账本</button>
+    </div>
+</div>
+
+<div class="app-container" id="mainApp" style="display: none;">
     <header>
-        <h1>记账</h1>
-        <span class="reset-link" onclick="clearAll()">清空数据</span>
+        <h1>记账 Pro</h1>
+        <span class="logout-btn" onclick="logout()">退出登录</span>
     </header>
 
-    <div class="summary-card">
-        <div class="balance-label">账户余额</div>
-        <div class="balance-amount" id="balanceDisplay">￥0.00</div>
-        <div class="stats-row">
-            <div class="stat-item">
-                <div class="stat-label">总收入</div>
-                <div class="stat-value income-text" id="incDisplay">￥0.00</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">总支出</div>
-                <div class="stat-value expense-text" id="expDisplay">￥0.00</div>
-            </div>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <select id="monthFilter" onchange="render()" style="border: none; font-size: 18px; font-weight: 700; background: none; outline: none;"></select>
+            <span style="color: var(--text-sec); font-size: 13px;">本月余</span>
+        </div>
+        <div id="monthlyBalance" style="font-size: 32px; font-weight: 700; margin: 10px 0; color: var(--ios-blue);">￥0.00</div>
+        <div class="stat-row">
+            <div><small style="color:var(--text-sec)">收入</small><div id="monthlyInc" style="color: var(--ios-green); font-weight: 600;">￥0.00</div></div>
+            <div><small style="color:var(--text-sec)">支出</small><div id="monthlyExp" style="color: var(--ios-red); font-weight: 600;">￥0.00</div></div>
         </div>
     </div>
 
-    <div class="type-selector">
-        <button class="type-btn active" id="btnExp" onclick="changeType('expense')">支出</button>
-        <button class="type-btn" id="btnInc" onclick="changeType('income')">收入</button>
+    <div class="card">
+        <div class="type-tabs">
+            <button class="tab active" id="tabExp" onclick="setMode('expense')">支出</button>
+            <button class="tab" id="tabInc" onclick="setMode('income')">收入</button>
+        </div>
+        <div class="input-group">
+            <input type="date" id="inputDate">
+            <select id="inputCat"></select>
+            <input type="number" id="inputAmt" placeholder="0.00" inputmode="decimal">
+            <input type="text" id="inputDesc" placeholder="备注 (可选)">
+        </div>
+        <button class="primary-btn" id="saveBtn" onclick="save()">记一笔</button>
     </div>
 
-    <div class="input-group">
-        <input type="number" id="amtInput" placeholder="0.00" inputmode="decimal">
-        <input type="text" id="descInput" placeholder="备注">
+    <div class="card">
+        <h3 style="margin-top:0">分类占比 (本月支出)</h3>
+        <div id="categoryAnalysis"></div>
     </div>
-    <button class="add-btn" id="mainBtn" onclick="handleSave()">记录这笔账</button>
 
-    <div class="list-header">历史明细</div>
-    <div id="listWrapper"></div>
+    <div class="card">
+        <h3 style="margin-top:0">历史明细</h3>
+        <ul id="historyList"></ul>
+    </div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'money_app_v4';
-    let currentMode = 'expense';
+    const STORAGE_KEY = 'PM_ACCOUNT_V5';
+    let mode = 'expense';
+    const cats = {
+        expense: ['餐饮', '购物', '交通', '娱乐', '住房', '医疗', '其他'],
+        income: ['工资', '奖金', '理财', '红包', '其他']
+    };
 
-    window.onload = function() { refreshUI(); };
-
-    function changeType(type) {
-        currentMode = type;
-        document.getElementById('btnExp').classList.toggle('active', type === 'expense');
-        document.getElementById('btnInc').classList.toggle('active', type === 'income');
-        document.getElementById('mainBtn').style.background = (type === 'income') ? 'var(--ios-green)' : 'var(--ios-blue)';
-    }
-
-    function handleSave() {
-        const amtEl = document.getElementById('amtInput');
-        const descEl = document.getElementById('descInput');
-        const amount = parseFloat(amtEl.value);
-        const desc = descEl.value.trim() || (currentMode === 'income' ? '收入' : '支出');
-
-        if (isNaN(amount) || amount <= 0) {
-            alert('请输入有效金额');
-            return;
-        }
-
-        const newRecord = {
-            id: Date.now(),
-            amount: amount,
-            desc: desc,
-            type: currentMode,
-            date: new Date().toLocaleDateString()
-        };
-
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        data.push(newRecord);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        amtEl.value = '';
-        descEl.value = '';
-        refreshUI();
-    }
-
-    function removeRecord(id) {
-        if (!confirm('确定删除吗？')) return;
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        const filtered = data.filter(item => item.id !== id);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-        refreshUI();
-    }
-
-    function clearAll() {
-        if (!confirm('确定清空？')) return;
-        localStorage.removeItem(STORAGE_KEY);
-        refreshUI();
-    }
-
-    function refreshUI() {
-        const wrapper = document.getElementById('listWrapper');
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        let incTotal = 0, expTotal = 0;
-        let html = '<ul>';
-
-        if (data.length === 0) {
-            wrapper.innerHTML = '<div class="empty">暂无记录</div>';
+    // 1. 登录逻辑
+    function checkLogin() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        if (u === '123' && p === '123') {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            sessionStorage.setItem('isAuth', 'true');
+            initApp();
         } else {
-            [...data].reverse().forEach(item => {
-                if (item.type === 'income') incTotal += item.amount;
-                else expTotal += item.amount;
-                html += `<li>
-                    <div class="item-info"><span class="item-name">${item.desc}</span><span class="item-date">${item.date}</span></div>
-                    <div class="item-right">
-                        <span class="item-price ${item.type === 'income' ? 'income-text' : 'expense-text'}">${item.type === 'income' ? '+' : '-'}￥${item.amount.toFixed(2)}</span>
-                        <span class="del-icon" onclick="removeRecord(${item.id})">删除</span>
-                    </div>
-                </li>`;
-            });
-            wrapper.innerHTML = html + '</ul>';
+            alert('用户名或密码错误');
         }
-        document.getElementById('incDisplay').innerText = '￥' + incTotal.toFixed(2);
-        document.getElementById('expDisplay').innerText = '￥' + expTotal.toFixed(2);
-        document.getElementById('balanceDisplay').innerText = '￥' + (incTotal - expTotal).toFixed(2);
+    }
+
+    function logout() {
+        sessionStorage.removeItem('isAuth');
+        location.reload();
+    }
+
+    // 2. 初始化
+    function initApp() {
+        // 设置默认日期为今天
+        document.getElementById('inputDate').valueAsDate = new Date();
+        // 初始化月份下拉框 (最近6个月)
+        const filter = document.getElementById('monthFilter');
+        for(let i=0; i<6; i++) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            const m = d.toISOString().slice(0, 7);
+            filter.innerHTML += `<option value="${m}">${m.replace('-','年')}月</option>`;
+        }
+        setMode('expense');
+        render();
+    }
+
+    function setMode(m) {
+        mode = m;
+        document.getElementById('tabExp').classList.toggle('active', m === 'expense');
+        document.getElementById('tabInc').classList.toggle('active', m === 'income');
+        const catSelect = document.getElementById('inputCat');
+        catSelect.innerHTML = cats[m].map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('saveBtn').style.background = (m === 'income') ? 'var(--ios-green)' : 'var(--ios-blue)';
+    }
+
+    // 3. 数据处理
+    function save() {
+        const date = document.getElementById('inputDate').value;
+        const amt = parseFloat(document.getElementById('inputAmt').value);
+        const cat = document.getElementById('inputCat').value;
+        const desc = document.getElementById('inputDesc').value.trim();
+
+        if (!date || isNaN(amt) || amt <= 0) return alert('请填写完整');
+
+        const record = { id: Date.now(), date, amt, cat, desc, type: mode };
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        data.push(record);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+        document.getElementById('inputAmt').value = '';
+        document.getElementById('inputDesc').value = '';
+        render();
+    }
+
+    function render() {
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        const currentMonth = document.getElementById('monthFilter').value;
+        
+        // 过滤当前月数据
+        const monthData = data.filter(d => d.date.startsWith(currentMonth));
+        
+        // 计算月度汇总
+        let inc = 0, exp = 0;
+        const catMap = {}; // 用于分类占比统计
+        
+        monthData.forEach(d => {
+            if (d.type === 'income') {
+                inc += d.amt;
+            } else {
+                exp += d.amt;
+                catMap[d.cat] = (catMap[d.cat] || 0) + d.amt;
+            }
+        });
+
+        document.getElementById('monthlyInc').innerText = `￥${inc.toFixed(2)}`;
+        document.getElementById('monthlyExp').innerText = `￥${exp.toFixed(2)}`;
+        document.getElementById('monthlyBalance').innerText = `￥${(inc - exp).toFixed(2)}`;
+
+        // 渲染分类趋势占比
+        let catHtml = '';
+        Object.keys(catMap).sort((a,b) => catMap[b] - catMap[a]).forEach(c => {
+            const percent = ((catMap[c] / exp) * 100).toFixed(0);
+            catHtml += `
+                <div class="category-stat">
+                    <div class="cat-info"><span>${c}</span><span>￥${catMap[c].toFixed(1)} (${percent}%)</span></div>
+                    <div class="progress-bg"><div class="progress-bar" style="width:${percent}%"></div></div>
+                </div>`;
+        });
+        document.getElementById('categoryAnalysis').innerHTML = catHtml || '<div style="color:#8e8e93; font-size:13px;">本月暂无支出分析</div>';
+
+        // 渲染明细
+        const listHtml = monthData.reverse().map(d => `
+            <li>
+                <div class="item-left">
+                    <span class="item-cat">${d.cat}</span>
+                    <span class="item-name">${d.desc || d.cat}</span>
+                    <span class="item-date">${d.date}</span>
+                </div>
+                <div style="font-weight:700; ${d.type==='income'?'color:var(--ios-green)':'color:var(--text-main)'}">
+                    ${d.type==='income'?'+':'-'}￥${d.amt.toFixed(2)}
+                </div>
+            </li>
+        `).join('');
+        document.getElementById('historyList').innerHTML = listHtml || '<div style="text-align:center;color:#8e8e93;padding:20px;">暂无明细</div>';
+    }
+
+    // 自动检查是否已登录（刷新页面不丢状态）
+    if(sessionStorage.getItem('isAuth') === 'true') {
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        initApp();
     }
 </script>
 </body>
